@@ -11,18 +11,21 @@ go-groupthrottle eliminates this problem by grouping or "buffering" the addition
 
 ### Basic Usage
 
-Begin by importing the package and creating a `GroupThrottle`. A function and an interval is provided which determines how much time must elapse with no new additions before the function is invoked.
+Begin by importing the package and creating a `GroupThrottle`. A function and an interval is provided which determines how much time must elapse with no new additions before the function is invoked. The callback function must take a slice as its only parameter. The slice type will determine what type of items may be added.
 
     import "github.com/nathan-osman/go-groupthrottle"
 
-    func process(items []interface{}) {
+    func process(items []*Item{}) {
         // do something with the items
     }
 
-    t := groupthrottle.New(process, 10*time.Second)
+    t, err := groupthrottle.New(process, 10*time.Second)
+    if err != nil {
+        // handle error
+    }
     defer t.Close()
 
-To add items, use the `Add()` method and supply a key for the item. In the example described above, the filename would be a suitable key name.
+To add items, use the `Add()` method and supply a key for the item. In the example described above, the filename would be a suitable key name. `Add()` will return an error if the item type does not match the slice type in the callback's parameter.
 
     i := &Item{
         Field1: 1,
