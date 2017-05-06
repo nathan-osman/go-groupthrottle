@@ -19,10 +19,8 @@ Begin by importing the package and creating a `GroupThrottle`. A function and an
         // do something with the items
     }
 
-    t, err := groupthrottle.New(process, 10*time.Second)
-    if err != nil {
-        // handle error
-    }
+    t := groupthrottle.New(process, 10*time.Second)
+    defer t.Close()
 
 To add items, use the `Add()` method and supply a key for the item. In the example described above, the filename would be a suitable key name.
 
@@ -35,3 +33,7 @@ To add items, use the `Add()` method and supply a key for the item. In the examp
 To remove an item before the timer expires and the function is invoked, use the `Remove()` method.
 
     t.Remove("mykey")
+
+To immediately invoke the function with all of the pending items, use the `Flush()` method.
+
+    t.Flush()
