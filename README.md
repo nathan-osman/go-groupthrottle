@@ -3,7 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/nathan-osman/go-groupthrottle?status.svg)](https://godoc.org/github.com/nathan-osman/go-groupthrottle)
 [![MIT License](http://img.shields.io/badge/license-MIT-9370d8.svg?style=flat)](http://opensource.org/licenses/MIT)
 
-This package helps avoid repeatedly calling certain functions repeatedly by grouping parameters.
+This package helps avoid repeatedly calling functions by grouping parameters.
 
 For example, suppose that you had a function that generates a special index based on the pictures in a directory. To keep the index up to date, the function watches for new files being added and regenerates the index. This works great until someone pastes 100 new pictures in the directory; suddenly the function is invoked 100 times.
 
