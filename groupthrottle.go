@@ -1,10 +1,19 @@
 package groupthrottle
 
 import (
+	"errors"
+	"reflect"
 	"time"
 )
 
-type addParams struct {
+var (
+	ErrCallbackNotFunc = errors.New("param must be a function")
+	ErrParamCount      = errors.New("callback must have a single param")
+	ErrParamType       = errors.New("callback param must be a slice")
+	ErrInvalidType     = errors.New("type does not match callback")
+)
+
+type addItem struct {
 	Key  string
 	Item interface{}
 }
@@ -14,10 +23,11 @@ type addParams struct {
 type GroupThrottle struct {
 	stop     chan bool
 	stopped  chan bool
-	add      chan *addParams
+	add      chan *addItem
 	remove   chan string
 	flush    chan bool
-	callback func(...interface{})
+	callback reflect.Value
+	itemType reflect.Type
 	delay    time.Duration
 }
 
@@ -44,12 +54,12 @@ func (g *GroupThrottle) run() {
 		case <-g.stop:
 			return
 		}
-		itemList := []interface{}{}
+		itemList := reflect.MakeSlice(reflect.SliceOf(g.itemType), 0, 0)
 		for _, i := range items {
-			itemList = append(itemList, i)
+			itemList = reflect.Append(itemList, reflect.ValueOf(i))
 		}
 		go func() {
-			g.callback(itemList)
+			g.callback.Call([]reflect.Value{itemList})
 		}()
 		items = make(map[string]interface{})
 		timer = nil
@@ -58,26 +68,43 @@ func (g *GroupThrottle) run() {
 
 // New creates a new GroupThrottle that will invoke the specified callback
 // function after the specified delay.
-func New(callback func(...interface{}), delay time.Duration) *GroupThrottle {
+func New(callback interface{}, delay time.Duration) (*GroupThrottle, error) {
+	callbackType := reflect.TypeOf(callback)
+	if callbackType.Kind() != reflect.Func {
+		return nil, ErrCallbackNotFunc
+	}
+	if callbackType.NumIn() != 1 {
+		return nil, ErrParamCount
+	}
+	paramType := callbackType.In(0)
+	if paramType.Kind() != reflect.Slice {
+		return nil, ErrParamType
+	}
 	g := &GroupThrottle{
-		stop:    make(chan bool),
-		stopped: make(chan bool),
-		add:     make(chan *addParams),
-		remove:  make(chan string),
-		flush:   make(chan bool),
-		delay:   delay,
+		stop:     make(chan bool),
+		stopped:  make(chan bool),
+		add:      make(chan *addItem),
+		remove:   make(chan string),
+		flush:    make(chan bool),
+		callback: reflect.ValueOf(callback),
+		itemType: paramType.Elem(),
+		delay:    delay,
 	}
 	go g.run()
-	return g
+	return g, nil
 }
 
 // Add adds an item to the throttle. If an item already exists with the
 // specified key, it is replaced.
-func (g *GroupThrottle) Add(key string, item interface{}) {
-	g.add <- &addParams{
+func (g *GroupThrottle) Add(key string, item interface{}) error {
+	if !reflect.TypeOf(item).AssignableTo(g.itemType) {
+		return ErrInvalidType
+	}
+	g.add <- &addItem{
 		Key:  key,
 		Item: item,
 	}
+	return nil
 }
 
 // Remove removes an item from the throttle if it exists.
