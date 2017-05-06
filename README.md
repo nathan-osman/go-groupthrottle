@@ -15,7 +15,7 @@ Begin by importing the package and creating a `GroupThrottle`. A function and an
 
     import "github.com/nathan-osman/go-groupthrottle"
 
-    func process(items []*Item{}) {
+    func process(items []*Item) {
         // do something with the items
     }
 
