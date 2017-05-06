@@ -1,5 +1,6 @@
 ## go-groupthrottle
 
+[![Build Status](https://travis-ci.org/nathan-osman/go-groupthrottle.svg?branch=master)](https://travis-ci.org/nathan-osman/go-groupthrottle)
 [![GoDoc](https://godoc.org/github.com/nathan-osman/go-groupthrottle?status.svg)](https://godoc.org/github.com/nathan-osman/go-groupthrottle)
 [![MIT License](http://img.shields.io/badge/license-MIT-9370d8.svg?style=flat)](http://opensource.org/licenses/MIT)
 
