@@ -95,7 +95,8 @@ func New(callback interface{}, delay time.Duration) (*GroupThrottle, error) {
 }
 
 // Add adds an item to the throttle. If an item already exists with the
-// specified key, it is replaced.
+// specified key, it is replaced. The item type must match the slice type in
+// the callback's parameter. This method is thread-safe.
 func (g *GroupThrottle) Add(key string, item interface{}) error {
 	if !reflect.TypeOf(item).AssignableTo(g.itemType) {
 		return ErrInvalidType
@@ -107,12 +108,14 @@ func (g *GroupThrottle) Add(key string, item interface{}) error {
 	return nil
 }
 
-// Remove removes an item from the throttle if it exists.
+// Remove removes an item from the throttle if it exists. This method is
+// thread-safe.
 func (g *GroupThrottle) Remove(key string) {
 	g.remove <- key
 }
 
 // Flush causes the callback to be invoked immediately with all pending items.
+// This method is thread-safe.
 func (g *GroupThrottle) Flush() {
 	g.flush <- true
 }
